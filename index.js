@@ -104,6 +104,7 @@ function findTagKey(type, id) {
  * @param {string} [config.sellerTaxBranchID]
  * @param {string} [config.vatRate]
  * @param {string} [config.vatAmount]
+ * @param {string} [config.paymentInnovation]
  *
  */
 function generate(config) {
@@ -247,6 +248,18 @@ function generate(config) {
       encode(vat.SELLER_TAX_BRANCH_ID, config.sellerTaxBranchID) +
         (config.vatRate ? encode(vat.VAT_RATE, config.vatRate) : "") +
         encode(vat.VAT_AMOUNT, config.vatAmount)
+    );
+  }
+
+  if (config.paymentInnovation) {
+    const strMatch = `/KPS(\w+)${promptPayBillPayment.REFERENCE_1}/i`;
+    const isMatch = promptPayBillPayment.REFERENCE_2.match(strMatch);
+    payload += encode(
+      tag.PAYMENT_INNOVATION,
+      encode("00", application.PAYMENT_INNOVATION) +
+        encode("01", isMatch) +
+        encode("02", promptPayBillPayment.REFERENCE_1) +
+        encode("04", promptPayBillPayment.REFERENCE_2)
     );
   }
 
