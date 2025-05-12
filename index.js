@@ -251,15 +251,15 @@ function generate(config) {
     );
   }
 
-  if (config.paymentInnovation) {
-    const strMatch = `/KPS(\w+)${promptPayBillPayment.REFERENCE_1}/i`;
-    const isMatch = promptPayBillPayment.REFERENCE_2.match(strMatch);
+  if (config.paymentInnovation === "KShop") {
+    const strMatch = new RegExp(`KPS(\\w+)${config.reference1}`, "i");
+    const isMatch = config.reference2.match(eval(strMatch));
     payload += encode(
       tag.PAYMENT_INNOVATION,
       encode("00", application.PAYMENT_INNOVATION) +
-        encode("01", isMatch) +
-        encode("02", promptPayBillPayment.REFERENCE_1) +
-        encode("04", promptPayBillPayment.REFERENCE_2)
+        encode("01", isMatch[1]) +
+        encode("02", config.reference1) +
+        encode("04", config.reference2)
     );
   }
 
