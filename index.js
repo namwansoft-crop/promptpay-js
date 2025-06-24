@@ -180,7 +180,7 @@ function generate(config) {
   if (config.creditCard) {
     if (config.creditCard.merchantId) payload += encode(tag.CREDIT_CARD_MERCHANT_ID, config.creditCard.merchantId);
     if (config.creditCard.merchantInformation)
-      payload += encode(tag.CREDIT_CARD_QR, encode(creditCard.AID, config.creditCard.merchantInformation.AID) + encode(creditCard.MERCHANT_ID, config.creditCard.merchantInformation.merchantId) + encode(creditCard.MERCHANT_PAN, config.creditCard.merchantInformation.pan));
+      payload += encode(tag.CREDIT_CARD_QR, encode(creditCard.AID, config.creditCard.merchantInformation.aid) + encode(creditCard.MERCHANT_ID, config.creditCard.merchantInformation.merchantId) + encode(creditCard.MERCHANT_PAN, config.creditCard.merchantInformation.pan));
   }
 
   if (config["04"]) payload += encode("04", config["04"]);
