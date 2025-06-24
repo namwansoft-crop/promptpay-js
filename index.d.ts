@@ -1,16 +1,6 @@
 declare function generate(config: {
-  method:
-    | "QR_STATIC"
-    | "QR_DYNAMIC"
-    | "BLE_STATIC"
-    | "BLE_DYNAMIC"
-    | "NFC_STATIC"
-    | "NFC_DYNAMIC";
-  application:
-    | "PROMPTPAY_CREDIT_TRANSFER"
-    | "PROMPTPAY_CREDIT_TRANSFER_WITH_OTA"
-    | "PROMPTPAY_BILL_PAYMENT"
-    | "PROMPTPAY_BILL_PAYMENT_CROSS_BORDER";
+  method: "QR_STATIC" | "QR_DYNAMIC" | "BLE_STATIC" | "BLE_DYNAMIC" | "NFC_STATIC" | "NFC_DYNAMIC";
+  application: "PROMPTPAY_CREDIT_TRANSFER" | "PROMPTPAY_CREDIT_TRANSFER_WITH_OTA" | "PROMPTPAY_BILL_PAYMENT" | "PROMPTPAY_BILL_PAYMENT_CROSS_BORDER";
   mobileNumber?: string;
   nationalID?: string;
   taxID?: string;
@@ -45,15 +35,6 @@ declare function generate(config: {
   vatAmount?: string;
 }): string;
 
-declare function parse(
-  payload: string,
-  tagType?:
-    | "PROMPTPAY_CREDIT_TRANSFER"
-    | "PROMPTPAY_BILL_PAYMENT"
-    | "ADDITIONAL_DATA_FIELD"
-): { [key: string]: { key: string; value: any } };
+declare function parse(payload: string, tagType?: "PROMPTPAY_CREDIT_TRANSFER" | "PROMPTPAY_BILL_PAYMENT" | "ADDITIONAL_DATA_FIELD"): { [key: string]: { key: string; value: any } };
 
-export default {
-  generate,
-  parse
-};
+export default { generate, parse };
