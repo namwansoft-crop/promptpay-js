@@ -5,8 +5,10 @@
  *
  */
 function encode(tagID, value) {
-  console.log("size of payload", tagID, value.length);
-  if (value.length > 99) throw new Error("Exceed maximum size of payload");
+  if (value.length > 99) {
+    console.log(tagID, "size of payload", value.length);
+    throw new Error("Exceed maximum size of payload");
+  }
   return tagID + String(value.length).padStart(2, "0") + value;
 }
 
