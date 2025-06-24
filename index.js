@@ -10,11 +10,13 @@ const promptPayBillPayment = require("./constants/promptPayBillPayment.json");
 const additionalDataField = require("./constants/additionalDataField.json");
 const vat = require("./constants/vat.json");
 
+const myPomptQR = require("./constants/myPomptQR.json");
+const creditCard = require("./constants/creditCard.json");
+
 const PROMPTPAY_CREDIT_TRANSFER = "PROMPTPAY_CREDIT_TRANSFER";
 const PROMPTPAY_CREDIT_TRANSFER_WITH_OTA = "PROMPTPAY_CREDIT_TRANSFER_WITH_OTA";
 const PROMPTPAY_BILL_PAYMENT = "PROMPTPAY_BILL_PAYMENT";
-const PROMPTPAY_BILL_PAYMENT_CROSS_BORDER =
-  "PROMPTPAY_BILL_PAYMENT_CROSS_BORDER";
+const PROMPTPAY_BILL_PAYMENT_CROSS_BORDER = "PROMPTPAY_BILL_PAYMENT_CROSS_BORDER";
 
 const MOBILE_NUMBER = "MOBILE_NUMBER";
 const NATIONAL_ID = "NATIONAL_ID";
@@ -26,6 +28,8 @@ const CRC_INITIAL = 0xffff;
 const CRC_LENGTH = "04";
 
 const ADDITIONAL_DATA_FIELD = "ADDITIONAL_DATA_FIELD";
+const MY_PROMPT_QR = "MY_PROMPT_QR";
+const CREDIT_CARD_QR = "CREDIT_CARD_QR";
 
 const UNKNOWN = "UNKNOWN";
 
@@ -46,23 +50,15 @@ const UNKNOWN = "UNKNOWN";
 function findTagKey(type, id) {
   switch (type) {
     case PROMPTPAY_CREDIT_TRANSFER:
-      return (
-        Object.keys(promptPayCreditTransfer).find(
-          key => promptPayCreditTransfer[key] === id
-        ) || UNKNOWN
-      );
+      return Object.keys(promptPayCreditTransfer).find(key => promptPayCreditTransfer[key] === id) || UNKNOWN;
     case PROMPTPAY_BILL_PAYMENT:
-      return (
-        Object.keys(promptPayBillPayment).find(
-          key => promptPayBillPayment[key] === id
-        ) || UNKNOWN
-      );
+      return Object.keys(promptPayBillPayment).find(key => promptPayBillPayment[key] === id) || UNKNOWN;
     case ADDITIONAL_DATA_FIELD:
-      return (
-        Object.keys(additionalDataField).find(
-          key => additionalDataField[key] === id
-        ) || UNKNOWN
-      );
+      return Object.keys(additionalDataField).find(key => additionalDataField[key] === id) || UNKNOWN;
+    case MY_PROMPT_QR:
+      return Object.keys(myPomptQR).find(key => myPomptQR[key] === id) || UNKNOWN;
+    case CREDIT_CARD_QR:
+      return Object.keys(creditCard).find(key => creditCard[key] === id) || UNKNOWN;
     default:
       return Object.keys(tag).find(key => tag[key] === id) || UNKNOWN;
   }
@@ -110,28 +106,17 @@ function findTagKey(type, id) {
 function generate(config) {
   if (typeof config !== "object") throw new Error("Missing config");
   if (!config.method) throw new Error("Missing required config: method");
-  if (!config.application)
-    throw new Error("Missing required config: application");
-  if (!config.currencyCode)
-    throw new Error("Missing required config: currencyCode");
-  if (!config.countryCode)
-    throw new Error("Missing required config: countryCode");
+  if (!config.application) throw new Error("Missing required config: application");
+  if (!config.currencyCode) throw new Error("Missing required config: currencyCode");
+  if (!config.countryCode) throw new Error("Missing required config: countryCode");
 
-  if (!Object.keys(pointOfInitiationMethod).includes(config.method))
-    throw new Error("Invalid parameter: method");
-  if (!Object.keys(application).includes(config.application))
-    throw new Error("Invalid parameter: application");
+  if (!Object.keys(pointOfInitiationMethod).includes(config.method)) throw new Error("Invalid parameter: method");
+  if (!Object.keys(application).includes(config.application)) throw new Error("Invalid parameter: application");
 
   let payload = encode(tag.PAYLOAD_FORMAT_INDICATOR, "01");
-  payload += encode(
-    tag.POINT_OF_INITIATION_METHOD,
-    pointOfInitiationMethod[config.method]
-  );
+  payload += encode(tag.POINT_OF_INITIATION_METHOD, pointOfInitiationMethod[config.method]);
 
-  if (
-    config.application === PROMPTPAY_CREDIT_TRANSFER ||
-    config.application === PROMPTPAY_CREDIT_TRANSFER_WITH_OTA
-  ) {
+  if (config.application === PROMPTPAY_CREDIT_TRANSFER || config.application === PROMPTPAY_CREDIT_TRANSFER_WITH_OTA) {
     const identification = [
       { key: MOBILE_NUMBER, value: config.mobileNumber },
       { key: NATIONAL_ID, value: config.nationalID },
@@ -140,44 +125,17 @@ function generate(config) {
       { key: BANK_ACCOUNT, value: config.bankAccount }
     ].filter(val => val.value);
 
-    if (identification.length === 0)
-      throw new Error(`${config.application} missing required config`);
-    if (
-      config.application === PROMPTPAY_CREDIT_TRANSFER_WITH_OTA &&
-      !config.ota
-    )
-      throw new Error(`${config.application} missing required config: ota`);
+    if (identification.length === 0) throw new Error(`${config.application} missing required config`);
+    if (config.application === PROMPTPAY_CREDIT_TRANSFER_WITH_OTA && !config.ota) throw new Error(`${config.application} missing required config: ota`);
 
-    payload += encode(
-      tag.PROMPTPAY_CREDIT_TRANSFER,
-      encode(promptPayCreditTransfer.AID, application[config.application]) +
-        encode(
-          promptPayCreditTransfer[identification[0].key],
-          identification[0].value
-        ) +
-        (config.ota ? encode(promptPayCreditTransfer.OTA, config.ota) : "")
-    );
-  } else if (
-    config.application === PROMPTPAY_BILL_PAYMENT ||
-    config.application === PROMPTPAY_BILL_PAYMENT_CROSS_BORDER
-  ) {
-    if (!config.billerID)
-      throw new Error(
-        `${config.application} missing required config: billerID`
-      );
-    if (!config.reference1)
-      throw new Error(
-        `${config.application} missing required config: reference1`
-      );
+    payload += encode(tag.PROMPTPAY_CREDIT_TRANSFER, encode(promptPayCreditTransfer.AID, application[config.application]) + encode(promptPayCreditTransfer[identification[0].key], identification[0].value) + (config.ota ? encode(promptPayCreditTransfer.OTA, config.ota) : ""));
+  } else if (config.application === PROMPTPAY_BILL_PAYMENT || config.application === PROMPTPAY_BILL_PAYMENT_CROSS_BORDER) {
+    if (!config.billerID) throw new Error(`${config.application} missing required config: billerID`);
+    if (!config.reference1) throw new Error(`${config.application} missing required config: reference1`);
 
     payload += encode(
       tag.PROMPTPAY_BILL_PAYMENT,
-      encode(promptPayBillPayment.AID, application[config.application]) +
-        encode(promptPayBillPayment.BILLER_ID, config.billerID) +
-        encode(promptPayBillPayment.REFERENCE_1, config.reference1) +
-        (config.reference2
-          ? encode(promptPayBillPayment.REFERENCE_2, config.reference2)
-          : "")
+      encode(promptPayBillPayment.AID, application[config.application]) + encode(promptPayBillPayment.BILLER_ID, config.billerID) + encode(promptPayBillPayment.REFERENCE_1, config.reference1) + (config.reference2 ? encode(promptPayBillPayment.REFERENCE_2, config.reference2) : "")
     );
   }
 
@@ -185,99 +143,56 @@ function generate(config) {
   payload += encode(tag.CURRENCY_CODE, config.currencyCode);
   if (config.amount) payload += encode(tag.AMOUNT, config.amount);
   payload += encode(tag.COUNTRY_CODE, config.countryCode);
-  if (config.merchantName)
-    payload += encode(tag.MERCHANT_NAME, config.merchantName);
-  if (config.merchantCity)
-    payload += encode(tag.MERCHANT_CITY, config.merchantCity);
+  if (config.merchantName) payload += encode(tag.MERCHANT_NAME, config.merchantName);
+  if (config.merchantCity) payload += encode(tag.MERCHANT_CITY, config.merchantCity);
   if (config.postalCode) payload += encode(tag.POSTAL_CODE, config.postalCode);
 
   if (config.additional) {
-    const {
-      billNumber,
-      mobileNumber,
-      storeID,
-      loyaltyNumber,
-      referenceID,
-      customerID,
-      terminalID,
-      purposeOfTransaction,
-      additionalCustomerData
-    } = config.additional;
+    const { billNumber, mobileNumber, storeID, loyaltyNumber, referenceID, customerID, terminalID, purposeOfTransaction, additionalCustomerData } = config.additional;
     payload += encode(
       tag.ADDITIONAL_DATA_FIELD,
       (billNumber ? encode(additionalDataField.BILL_NUMBER, billNumber) : "") +
-        (mobileNumber
-          ? encode(additionalDataField.MOBILE_NUMBER, mobileNumber)
-          : "") +
+        (mobileNumber ? encode(additionalDataField.MOBILE_NUMBER, mobileNumber) : "") +
         (storeID ? encode(additionalDataField.STORE_ID, storeID) : "") +
-        (loyaltyNumber
-          ? encode(additionalDataField.LOYALTY_NUMBER, loyaltyNumber)
-          : "") +
-        (referenceID
-          ? encode(additionalDataField.REFERENCE_ID, referenceID)
-          : "") +
-        (customerID
-          ? encode(additionalDataField.CUSTOMER_ID, customerID)
-          : "") +
-        (terminalID
-          ? encode(additionalDataField.TERMINAL_ID, terminalID)
-          : "") +
-        (purposeOfTransaction
-          ? encode(
-              additionalDataField.PERPOSE_OF_TRANSACTION,
-              purposeOfTransaction
-            )
-          : "") +
-        (additionalCustomerData
-          ? encode(
-              additionalDataField.ADDITIONAL_CUSTOMER_DATA,
-              additionalCustomerData
-            )
-          : "")
+        (loyaltyNumber ? encode(additionalDataField.LOYALTY_NUMBER, loyaltyNumber) : "") +
+        (referenceID ? encode(additionalDataField.REFERENCE_ID, referenceID) : "") +
+        (customerID ? encode(additionalDataField.CUSTOMER_ID, customerID) : "") +
+        (terminalID ? encode(additionalDataField.TERMINAL_ID, terminalID) : "") +
+        (purposeOfTransaction ? encode(additionalDataField.PERPOSE_OF_TRANSACTION, purposeOfTransaction) : "") +
+        (additionalCustomerData ? encode(additionalDataField.ADDITIONAL_CUSTOMER_DATA, additionalCustomerData) : "")
     );
   }
 
-  if (config.merchantInformation)
-    payload += encode(tag.MERCHANT_INFORMATION, config.merchantInformation);
+  if (config.merchantInformation) payload += encode(tag.MERCHANT_INFORMATION, config.merchantInformation);
   if (config.sellerTaxBranchID) {
-    if (!config.vatAmount)
-      throw new Error("VAT TQRC missing required config: vatAmount");
-
-    payload += encode(
-      tag.VAT_TQRC,
-      encode(vat.SELLER_TAX_BRANCH_ID, config.sellerTaxBranchID) +
-        (config.vatRate ? encode(vat.VAT_RATE, config.vatRate) : "") +
-        encode(vat.VAT_AMOUNT, config.vatAmount)
-    );
+    if (!config.vatAmount) throw new Error("VAT TQRC missing required config: vatAmount");
+    payload += encode(tag.VAT_TQRC, encode(vat.SELLER_TAX_BRANCH_ID, config.sellerTaxBranchID) + (config.vatRate ? encode(vat.VAT_RATE, config.vatRate) : "") + encode(vat.VAT_AMOUNT, config.vatAmount));
   }
 
+  let merchantCode, merchantRefer;
   if (config.paymentInnovation === "KShop") {
-    const strMatch = new RegExp(`KPS(\\w+)${config.reference1}`, "i");
-    const isMatch = config.reference2.match(eval(strMatch));
-    payload += encode(
-      tag.PAYMENT_INNOVATION,
-      encode("00", application.PAYMENT_INNOVATION) +
-        encode("01", isMatch[1]) +
-        encode("02", config.reference1) +
-        encode("04", config.reference2)
-    );
+    merchantCode = "004";
+    merchantRefer = "KPS";
+  }
+  if (config.paymentInnovation) {
+    payload += encode(tag.MY_PROMPT_QR, encode(myPomptQR.AID, application.MY_PROMPT_QR) + encode(myPomptQR.MERCHANT_ID, merchantCode) + encode(myPomptQR.MERCHANT_NAME, config.reference1) + encode(myPomptQR.TERMINAL_ID, config.reference2));
+  }
+  if (config.creditCard) {
+    if (config.creditCard.merchantId) payload += encode(tag.CREDIT_CARD_MERCHANT_ID, config.creditCard.merchantId);
+    if (config.creditCard.merchantInformation)
+      payload += encode(tag.CREDIT_CARD_QR, encode(creditCard.AID, config.creditCard.merchantInformation.AID) + encode(creditCard.MERCHANT_ID, config.creditCard.merchantInformation.merchantId) + encode(creditCard.MERCHANT_PAN, config.creditCard.merchantInformation.pan));
   }
 
-  if (config["02"]) payload += encode("02", config["02"]);
   if (config["04"]) payload += encode("04", config["04"]);
   if (config["15"]) payload += encode("15", config["15"]);
-  if (config["31"]) payload += encode("31", config["31"]);
-  if (config["51"]) payload += encode("51", config["51"]);
 
-  payload += encode(
+  return (payload += encode(
     tag.CRC,
     crc16xmodem(payload + tag.CRC + CRC_LENGTH, CRC_INITIAL)
       .toString(16)
       .padStart(4, "0")
       .toUpperCase()
-  );
-
-  return payload;
+  ));
 }
 
 /**
@@ -287,17 +202,8 @@ function generate(config) {
  */
 function parse(payload, tagType) {
   if (!payload) throw new Error("Missing required payload");
-  if (typeof payload !== "string")
-    throw new Error("Invalid parameter: payload must be string");
-  if (
-    tagType &&
-    ![
-      PROMPTPAY_CREDIT_TRANSFER,
-      PROMPTPAY_BILL_PAYMENT,
-      ADDITIONAL_DATA_FIELD
-    ].includes(tagType)
-  )
-    throw new Error("Invalid Parameter: tagType");
+  if (typeof payload !== "string") throw new Error("Invalid parameter: payload must be string");
+  if (tagType && ![PROMPTPAY_CREDIT_TRANSFER, PROMPTPAY_BILL_PAYMENT, ADDITIONAL_DATA_FIELD, MY_PROMPT_QR, CREDIT_CARD_QR].includes(tagType)) throw new Error("Invalid Parameter: tagType");
 
   const data = {};
   while (payload.length > 0) {
@@ -322,6 +228,18 @@ function parse(payload, tagType) {
           value: parse(decoded.value, ADDITIONAL_DATA_FIELD)
         };
         break;
+      case tag.MY_PROMPT_QR:
+        data[decoded.id] = {
+          key: findTagKey(tagType, decoded.id),
+          value: parse(decoded.value, MY_PROMPT_QR)
+        };
+        break;
+      case tag.CREDIT_CARD_QR:
+        data[decoded.id] = {
+          key: findTagKey(tagType, decoded.id),
+          value: parse(decoded.value, CREDIT_CARD_QR)
+        };
+        break;
       default:
         data[decoded.id] = {
           key: findTagKey(tagType, decoded.id),
@@ -329,8 +247,7 @@ function parse(payload, tagType) {
         };
     }
 
-    if (payload.length - decoded.raw.length < 0)
-      throw new Error("Invalid Payload");
+    if (payload.length - decoded.raw.length < 0) throw new Error("Invalid Payload");
 
     payload = payload.substr(decoded.raw.length, payload.length);
   }
@@ -338,7 +255,4 @@ function parse(payload, tagType) {
   return data;
 }
 
-module.exports = {
-  generate,
-  parse
-};
+module.exports = { generate, parse };
